@@ -8,6 +8,7 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
 // import axios from 'axios';
 export default function CoffeeOrderApp() {
   const [menuItems, setMenuItems] = useState([]);
@@ -50,7 +51,7 @@ export default function CoffeeOrderApp() {
         setMenuItems(data);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching menu:", error);
+        toast.error("Error fetching menu:", error);
         setLoading(false);
       }
     };
@@ -104,26 +105,41 @@ export default function CoffeeOrderApp() {
       !customerDetails.room ||
       !customerDetails.phone
     ) {
-      alert("Please fill in all details");
+      toast.error("Please fill in all details");
       return;
     }
 
     const order = {
-      customer: customerDetails,
-      items: cart,
-      total: getTotalPrice(),
-      timestamp: new Date().toISOString(),
+      customerName: customerDetails.name,
+      customerPhone: customerDetails.phone,
+      Floor: customerDetails.floor,
+      RoomNo: customerDetails.room,
+      orderItems: cart.map((item) => ({
+        item_id: item.id,
+        quantity: item.quantity,
+        Price: item.price,
+      })),
+      CreatedDate: new Date().toISOString(),
+      IsActive: true,
     };
 
-    // Replace with your actual API endpoint
-    // await fetch('YOUR_ORDER_API_ENDPOINT', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(order)
-    // });
+    const token =
+      localStorage.getItem("token") ||
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzU5MTMyMzY3LCJleHAiOjE3NjY5MDgzNjcsImlhdCI6MTc1OTEzMjM2N30.ko8YPHfApg0uN0k3kUTLcJXpZp-2s-6TiRHpsiab42Q";
 
-    console.log("Order placed:", order);
-    alert(
+    // Replace with your actual API endpoint
+    await fetch("https://localhost:7104/api/Order/CoffeeOrder", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(order),
+    });
+
+    // console.log("Order placed:", order);
+    toast.success(
       "Order placed successfully! We will deliver to your location shortly."
     );
     setCart([]);
@@ -145,6 +161,19 @@ export default function CoffeeOrderApp() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover={false}
+        theme="dark"
+        // transition={Bounce}
+      />
       {/* Header */}
       <header className="bg-amber-900 text-white shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -363,7 +392,7 @@ export default function CoffeeOrderApp() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-gray-700 font-semibold mb-2">
-                      Floor
+                      Address/Floor
                     </label>
                     <input
                       type="text"
